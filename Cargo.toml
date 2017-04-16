@@ -1,0 +1,25 @@
+[package]
+name = "ots"
+version = "0.1.0"
+authors = ["Andrew Poelstra <rust-ots@wpsoftware.net>"]
+license = "CC0-1.0"
+homepage = "https://github.com/apoelstra/rust-ots/"
+repository = "https://github.com/apoelstra/rust-ots/"
+documentation = "https://www.wpsoftware.net/rustdoc/ots/"
+description = "Rust library for parsing, verifying and serializing OpenTimestamps timestamps"
+
+keywords = [ "crypto", "bitcoin", "ots", "opentimestamps", "timestamping" ]
+
+[lib]
+name = "ots"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ots-info"
+path = "src/bin/ots_info.rs"
+
+[dependencies]
+env_logger = "0.4"
+log = "0.3"
+rust-crypto = "0.2"
+
