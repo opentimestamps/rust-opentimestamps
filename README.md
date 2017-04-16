@@ -14,3 +14,5 @@ dumps its contents to stdout, as a basic usage example. It really just calls
 other documentation, reading that function is a good starting point for seeing how
 the data structures work. You can execute it with `cargo run -- <filename.ots>`
 
+[Documentation](https://www.wpsoftware.net/rustdoc/ots/)
+
