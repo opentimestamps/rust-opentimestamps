@@ -1,6 +1,6 @@
 [package]
 name = "ots"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Andrew Poelstra <rust-ots@wpsoftware.net>"]
 license = "CC0-1.0"
 homepage = "https://github.com/apoelstra/rust-ots/"

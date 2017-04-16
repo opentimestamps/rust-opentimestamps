@@ -33,8 +33,10 @@ const VERSION: usize = 1;
 /// Structure representing an info file
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct DetachedTimestampFile {
-    digest_type: DigestType,
-    timestamp: Timestamp
+    /// The claimed hash function used to produce the document digest
+    pub digest_type: DigestType,
+    /// The actual timestamp data
+    pub timestamp: Timestamp
 }
 
 impl DetachedTimestampFile {
