@@ -16,7 +16,7 @@
 //!
 
 use std::fmt;
-use std::io::Read;
+use std::io::{Read, Write};
 
 use attestation::Attestation;
 use error::Error;
@@ -61,7 +61,6 @@ pub struct Timestamp {
 impl Timestamp {
     /// Deserialize one step in a timestamp. 
     fn deserialize_step_recurse<R: Read>(deser: &mut ser::Deserializer<R>, input_digest: Vec<u8>, tag: Option<u8>, recursion_limit: usize) -> Result<Step, Error> {
-
         if recursion_limit == 0 {
             return Err(Error::StackOverflow);
         }
@@ -127,6 +126,31 @@ impl Timestamp {
             start_digest: digest,
             first_step: first_step
         })
+    }
+
+    fn serialize_step_recurse<W: Write>(ser: &mut ser::Serializer<W>, step: &Step) -> Result<(), Error> {
+        match step.data {
+            StepData::Fork => {
+                for i in 0..step.next.len() - 1 {
+                    ser.write_byte(0xff)?;
+                    Timestamp::serialize_step_recurse(ser, &step.next[i])?;
+                }
+                Timestamp::serialize_step_recurse(ser, &step.next[step.next.len() - 1])
+            }
+            StepData::Op(ref op) => {
+                op.serialize(ser)?;
+                Timestamp::serialize_step_recurse(ser, &step.next[0])
+            }
+            StepData::Attestation(ref attest) => {
+                ser.write_byte(0x00)?;
+                attest.serialize(ser)
+            }
+        }
+    }
+
+    /// Serialize a timestamp
+    pub fn serialize<W: Write>(&self, ser: &mut ser::Serializer<W>) -> Result<(), Error> {
+        Timestamp::serialize_step_recurse(ser, &self.first_step)
     }
 }
 

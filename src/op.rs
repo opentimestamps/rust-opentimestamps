@@ -26,7 +26,7 @@ use crypto::sha1::Sha1;
 use crypto::sha2::Sha256;
 use crypto::ripemd160::Ripemd160;
 use std::fmt;
-use std::io::Read;
+use std::io::{Read, Write};
 
 use error::Error;
 use hex::Hexed;
@@ -85,6 +85,18 @@ impl Op {
             0xf1 => Ok(Op::Prepend(deser.read_bytes(1, MAX_OP_LENGTH)?)),
             x => Err(Error::BadOpTag(x))
         }
+    }
+
+    /// Serialize the op into a serializer
+    pub fn serialize<W: Write>(&self, ser: &mut ser::Serializer<W>) -> Result<(), Error> {
+        ser.write_byte(self.tag())?;
+        if let Op::Append(ref data) = *self {
+            ser.write_bytes(data)?;
+        }
+        if let Op::Prepend(ref data) = *self {
+            ser.write_bytes(data)?;
+        }
+        Ok(())
     }
 
     /// Execute an op on the given data

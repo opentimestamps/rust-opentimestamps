@@ -19,7 +19,7 @@
 //!
 
 use std::fmt;
-use std::io::Read;
+use std::io::{Read, Write};
 
 use error::Error;
 use hex::Hexed;
@@ -94,6 +94,27 @@ impl Attestation {
                 tag: tag,
                 data: deser.read_fixed_bytes(len)?
             })
+        }
+    }
+
+    /// Serialize an attestation
+    pub fn serialize<W: Write>(&self, ser: &mut ser::Serializer<W>) -> Result<(), Error> {
+        let mut byte_ser = ser::Serializer::new(vec![]);
+        match *self {
+            Attestation::Bitcoin { height } => {
+                ser.write_fixed_bytes(BITCOIN_TAG)?;
+                byte_ser.write_uint(height)?;
+                ser.write_bytes(&byte_ser.into_inner())
+            }
+            Attestation::Pending { ref uri } => {
+                ser.write_fixed_bytes(PENDING_TAG)?;
+                byte_ser.write_bytes(uri.as_bytes())?;
+                ser.write_bytes(&byte_ser.into_inner())
+            }
+            Attestation::Unknown { ref tag, ref data } => {
+                ser.write_fixed_bytes(tag)?;
+                ser.write_bytes(data)
+            }
         }
     }
 }

@@ -62,6 +62,19 @@ impl DetachedTimestampFile {
             timestamp: timestamp
         })
     }
+
+    /// Serialize the file into a reader
+    pub fn to_writer<W: Write>(&self, writer: W) -> Result<(), Error> {
+        let mut ser = Serializer::new(writer);
+        ser.write_magic()?;
+        ser.write_version()?;
+        ser.write_byte(self.digest_type.to_tag())?;
+        // We write timestamp.start_digest here and not in `Timestamp::serialize`
+        // to copy the way that python-opentimestamps is structured, though it is
+        // an abstraction violation
+        ser.write_fixed_bytes(&self.timestamp.start_digest)?;
+        self.timestamp.serialize(&mut ser)
+    }
 }
 
 impl fmt::Display for DetachedTimestampFile {
@@ -247,17 +260,8 @@ impl<W: Write> Serializer<W> {
     }
 
     /// Writes a single byte to the writer
-    fn write_byte(&mut self, byte: u8) -> Result<(), Error> {
+    pub fn write_byte(&mut self, byte: u8) -> Result<(), Error> {
         self.writer.write_all(&[byte]).map_err(Error::Io)
-    }
-
-    /// Write a boolean
-    pub fn write_bool(&mut self, b: bool) -> Result<(), Error> {
-        if b {
-            self.write_byte(0xff)
-        } else {
-            self.write_byte(0x00)
-        }
     }
 
     /// Write an unsigned integer
