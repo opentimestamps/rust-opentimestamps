@@ -26,7 +26,7 @@
 #![deny(missing_docs)]
 
 extern crate env_logger;
-extern crate ots;
+extern crate opentimestamps as ots;
 
 use std::{env, fs, process};
 
