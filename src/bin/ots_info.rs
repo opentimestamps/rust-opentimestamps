@@ -1,16 +1,13 @@
-// OpenTimestamps Library
-// Written in 2017 by
-//   Andrew Poelstra <rust-ots@wpsoftware.net>
+// Copyright (C) The OpenTimestamps developers
 //
-// To the extent possible under law, the author(s) have dedicated all
-// copyright and related and neighboring rights to this software to
-// the public domain worldwide. This software is distributed without
-// any warranty.
+// This file is part of rust-opentimestamps.
 //
-// You should have received a copy of the CC0 Public Domain Dedication
-// along with this software.
-// If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+// It is subject to the license terms in the LICENSE file found in the
+// top-level directory of this distribution.
 //
+// No part of rust-opentimestamps including this file, may be copied, modified,
+// propagated, or distributed except according to the terms contained in the
+// LICENSE file.
 
 //! # OpenTimestamps Viewer
 //!
