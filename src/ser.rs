@@ -22,7 +22,7 @@ use hex::Hexed;
 use timestamp::Timestamp;
 
 /// Magic bytes that every proof must start with
-const MAGIC: &'static [u8] = b"\x00OpenTimestamps\x00\x00Proof\x00\xbf\x89\xe2\xe8\x84\xe8\x92\x94";
+const MAGIC: &[u8] = b"\x00OpenTimestamps\x00\x00Proof\x00\xbf\x89\xe2\xe8\x84\xe8\x92\x94";
 
 /// Major version of timestamp files we understand
 const VERSION: usize = 1;
