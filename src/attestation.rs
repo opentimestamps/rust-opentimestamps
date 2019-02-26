@@ -67,7 +67,7 @@ impl Attestation {
         if tag == BITCOIN_TAG {
             let height = deser.read_uint()?;
             Ok(Attestation::Bitcoin {
-                height: height
+                height
             })
         } else if tag == PENDING_TAG {
             // This validation logic copied from python-opentimestamps. Peter comments
@@ -88,7 +88,7 @@ impl Attestation {
             })
         } else {
             Ok(Attestation::Unknown {
-                tag: tag,
+                tag,
                 data: deser.read_fixed_bytes(len)?
             })
         }
