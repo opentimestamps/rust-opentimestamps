@@ -32,6 +32,10 @@ const VERSION: usize = 1;
 pub struct DetachedTimestampFile {
     /// The claimed hash function used to produce the document digest
     pub digest_type: DigestType,
+
+    /// The initial timestamp digest input
+    pub digest: Vec<u8>,
+
     /// The actual timestamp data
     pub timestamp: Timestamp
 }
@@ -50,12 +54,13 @@ impl DetachedTimestampFile {
         trace!("Digest type: {}", digest_type);
         let digest = deser.read_fixed_bytes(digest_type.digest_len())?;
         trace!("Digest: {}", Hexed(&digest));
-        let timestamp = Timestamp::deserialize(&mut deser, digest)?;
+        let timestamp = Timestamp::deserialize(&mut deser)?;
 
         deser.check_eof()?;
 
         Ok(DetachedTimestampFile {
             digest_type,
+            digest,
             timestamp,
         })
     }
@@ -66,10 +71,7 @@ impl DetachedTimestampFile {
         ser.write_magic()?;
         ser.write_version()?;
         ser.write_byte(self.digest_type.to_tag())?;
-        // We write timestamp.start_digest here and not in `Timestamp::serialize`
-        // to copy the way that python-opentimestamps is structured, though it is
-        // an abstraction violation
-        ser.write_fixed_bytes(&self.timestamp.start_digest)?;
+        ser.write_fixed_bytes(&self.digest)?;
         self.timestamp.serialize(&mut ser)
     }
 }

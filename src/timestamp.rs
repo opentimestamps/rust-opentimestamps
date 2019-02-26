@@ -17,7 +17,6 @@ use std::io::{Read, Write};
 
 use attestation::Attestation;
 use error::Error;
-use hex::Hexed;
 use op::Op;
 use ser;
 
@@ -26,38 +25,28 @@ const RECURSION_LIMIT: usize = 256;
 
 /// The actual contents of the execution step
 #[derive(Clone, PartialEq, Eq, Debug)]
-pub enum StepData {
+pub enum Step {
     /// This step splits execution into multiple paths
-    Fork,
+    Fork(Vec<Step>),
     /// This step executes some concrete operation
     Op(Op),
     /// This step asserts an attestation of the current state by some timestamp service
     Attestation(Attestation)
 }
 
-/// An execution step in a timestamp verification
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct Step {
-    /// The contents of the step
-    pub data: StepData,
-    /// The output after execution
-    pub output: Vec<u8>,
-    /// A list of steps to execute after this one
-    pub next: Vec<Step>
-}
-
 /// Main structure representing a timestamp
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Timestamp {
-    /// The starting document digest
-    pub start_digest: Vec<u8>,
-    /// The first execution step in verifying it
-    pub first_step: Step
+    /// A list of all the steps in the Timestamp
+    pub steps: Vec<Step>
 }
 
 impl Timestamp {
     /// Deserialize one step in a timestamp. 
-    fn deserialize_step_recurse<R: Read>(deser: &mut ser::Deserializer<R>, input_digest: Vec<u8>, tag: Option<u8>, recursion_limit: usize) -> Result<Step, Error> {
+    fn deserialize_step_recurse<R: Read>(deser: &mut ser::Deserializer<R>,
+                                         steps: &mut Vec<Step>,
+                                         tag: Option<u8>,
+                                         recursion_limit: usize) -> Result<(), Error> {
         if recursion_limit == 0 {
             return Err(Error::StackOverflow);
         }
@@ -76,69 +65,68 @@ impl Timestamp {
             0x00 => {
                 let attest = Attestation::deserialize(deser)?;
                 trace!("[{:3}] Attestation: {}", recursion_limit, attest);
-                Ok(Step {
-                    data: StepData::Attestation(attest),
-                    output: input_digest,
-                    next: vec![]
-                })
+                steps.push(Step::Attestation(attest));
+                Ok(())
             }
             // Fork
             0xff => {
-                let mut forks = vec![];
+                let mut fork = vec![];
+
                 let mut next_tag = 0xff;
                 while next_tag == 0xff {
                     trace!("[{:3}] Forking..", recursion_limit);
-                    forks.push(Timestamp::deserialize_step_recurse(deser, input_digest.clone(), None, recursion_limit - 1)?);
+
+
+                    Timestamp::deserialize_step_recurse(deser,
+                                                        &mut fork,
+                                                        None,
+                                                        recursion_limit - 1)?;
+
                     next_tag = deser.read_byte()?;
                 }
-                forks.push(Timestamp::deserialize_step_recurse(deser, input_digest.clone(), Some(next_tag), recursion_limit - 1)?);
-                Ok(Step {
-                    data: StepData::Fork,
-                    output: input_digest,
-                    next: forks
-                })
+
+                let fork_step = Step::Fork(fork);
+                steps.push(fork_step);
+
+                Timestamp::deserialize_step_recurse(deser,
+                                                    steps,
+                                                    Some(next_tag),
+                                                    recursion_limit - 1)?;
+
+                Ok(())
             }
             // An actual tag
             tag => {
                 // parse tag
                 let op = Op::deserialize_with_tag(deser, tag)?;
-                let output_digest = op.execute(&input_digest);
-                trace!("[{:3}] Tag {} maps {} to {}.", recursion_limit, op, Hexed(&input_digest), Hexed(&output_digest));
-                // recurse
-                let next = vec![Timestamp::deserialize_step_recurse(deser, output_digest.clone(), None, recursion_limit - 1)?];
-                Ok(Step {
-                    data: StepData::Op(op),
-                    output: output_digest,
-                    next,
-                })
+                // trace!("[{:3}] Tag {} maps {} to {}.", recursion_limit, op, Hexed(&input_digest), Hexed(&output_digest));
+                steps.push(Step::Op(op));
+                Timestamp::deserialize_step_recurse(deser, steps, None,
+                                                    recursion_limit - 1)
             }
         }
     }
 
     /// Deserialize a timestamp
-    pub fn deserialize<R: Read>(deser: &mut ser::Deserializer<R>, digest: Vec<u8>) -> Result<Timestamp, Error> {
-        let first_step = Timestamp::deserialize_step_recurse(deser, digest.clone(), None, RECURSION_LIMIT)?;
+    pub fn deserialize<R: Read>(deser: &mut ser::Deserializer<R>) -> Result<Timestamp, Error> {
+        let mut steps = vec![];
 
-        Ok(Timestamp {
-            start_digest: digest,
-            first_step,
-        })
+        Timestamp::deserialize_step_recurse(deser, &mut steps, None, RECURSION_LIMIT)?;
+
+        Ok(Timestamp { steps })
     }
 
-    fn serialize_step_recurse<W: Write>(ser: &mut ser::Serializer<W>, step: &Step) -> Result<(), Error> {
-        match step.data {
-            StepData::Fork => {
-                for i in 0..step.next.len() - 1 {
-                    ser.write_byte(0xff)?;
-                    Timestamp::serialize_step_recurse(ser, &step.next[i])?;
+    fn serialize_step<W: Write>(ser: &mut ser::Serializer<W>, step: &Step) -> Result<(), Error> {
+        match step {
+            Step::Fork(ref ss) => {
+                ser.write_byte(0xff)?;
+                for s in ss {
+                    Timestamp::serialize_step(ser, &s)?;
                 }
-                Timestamp::serialize_step_recurse(ser, &step.next[step.next.len() - 1])
+                Ok(())
             }
-            StepData::Op(ref op) => {
-                op.serialize(ser)?;
-                Timestamp::serialize_step_recurse(ser, &step.next[0])
-            }
-            StepData::Attestation(ref attest) => {
+            Step::Op(ref op) => { op.serialize(ser) }
+            Step::Attestation(ref attest) => {
                 ser.write_byte(0x00)?;
                 attest.serialize(ser)
             }
@@ -147,7 +135,10 @@ impl Timestamp {
 
     /// Serialize a timestamp
     pub fn serialize<W: Write>(&self, ser: &mut ser::Serializer<W>) -> Result<(), Error> {
-        Timestamp::serialize_step_recurse(ser, &self.first_step)
+        for step in &self.steps {
+            Timestamp::serialize_step(ser, &step)?;
+        }
+        Ok(())
     }
 }
 
@@ -162,29 +153,28 @@ fn fmt_recurse(step: &Step, f: &mut fmt::Formatter, depth: usize, first_line: bo
         }
         if first_line {
             f.write_str("--->")?;
-        } else {
+        }
+        else {
             f.write_str("    ")?;
         }
         Ok(())
     }
 
-    match step.data {
-        StepData::Fork => {
-            indent(f, depth, first_line)?;
-            writeln!(f, "(fork {} ways)", step.next.len())?;
-            for fork in &step.next {
-                fmt_recurse(fork, f, depth + 1, true)?;
+    match step {
+        Step::Fork(ref steps) => {
+            indent(f, depth + 1, first_line)?;
+            for (i, step) in steps.iter().enumerate() {
+                fmt_recurse(step, f, depth + 1, i == 0)?;
             }
             Ok(())
         }
-        StepData::Op(ref op) => {
+        Step::Op(ref op) => {
             indent(f, depth, first_line)?;
             writeln!(f, "execute {}", op)?;
             indent(f, depth, false)?;
-            writeln!(f, " result {}", Hexed(&step.output))?;
-            fmt_recurse(&step.next[0], f, depth, false)
+            Ok(())
         }
-        StepData::Attestation(ref attest) => {
+        Step::Attestation(ref attest) => {
             indent(f, depth, first_line)?;
             writeln!(f, "result attested by {}", attest)
         }
@@ -193,8 +183,10 @@ fn fmt_recurse(step: &Step, f: &mut fmt::Formatter, depth: usize, first_line: bo
 
 impl fmt::Display for Timestamp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "Starting digest: {}", Hexed(&self.start_digest))?;
-        fmt_recurse(&self.first_step, f, 0, false)
+        for step in &self.steps {
+            fmt_recurse(&step, f, 0, false)?;
+        }
+        Ok(())
     }
 }
 
