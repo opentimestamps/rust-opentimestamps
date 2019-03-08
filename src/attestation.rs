@@ -28,9 +28,9 @@ const TAG_SIZE: usize = 8;
 const MAX_URI_LEN: usize = 1000;
 
 /// Tag indicating a Bitcoin attestation
-const BITCOIN_TAG: &'static [u8] = b"\x05\x88\x96\x0d\x73\xd7\x19\x01";
+const BITCOIN_TAG: &[u8] = b"\x05\x88\x96\x0d\x73\xd7\x19\x01";
 /// Tag indicating a pending attestation
-const PENDING_TAG: &'static [u8] = b"\x83\xdf\xe3\x0d\x2e\xf9\x0c\x8e";
+const PENDING_TAG: &[u8] = b"\x83\xdf\xe3\x0d\x2e\xf9\x0c\x8e";
 
 /// An attestation that some data existed at some time
 #[allow(missing_docs)]
@@ -67,7 +67,7 @@ impl Attestation {
         if tag == BITCOIN_TAG {
             let height = deser.read_uint()?;
             Ok(Attestation::Bitcoin {
-                height: height
+                height
             })
         } else if tag == PENDING_TAG {
             // This validation logic copied from python-opentimestamps. Peter comments
@@ -88,7 +88,7 @@ impl Attestation {
             })
         } else {
             Ok(Attestation::Unknown {
-                tag: tag,
+                tag,
                 data: deser.read_fixed_bytes(len)?
             })
         }

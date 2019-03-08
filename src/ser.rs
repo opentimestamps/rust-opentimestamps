@@ -22,7 +22,7 @@ use hex::Hexed;
 use timestamp::Timestamp;
 
 /// Magic bytes that every proof must start with
-const MAGIC: &'static [u8] = b"\x00OpenTimestamps\x00\x00Proof\x00\xbf\x89\xe2\xe8\x84\xe8\x92\x94";
+const MAGIC: &[u8] = b"\x00OpenTimestamps\x00\x00Proof\x00\xbf\x89\xe2\xe8\x84\xe8\x92\x94";
 
 /// Major version of timestamp files we understand
 const VERSION: usize = 1;
@@ -55,8 +55,8 @@ impl DetachedTimestampFile {
         deser.check_eof()?;
 
         Ok(DetachedTimestampFile {
-            digest_type: digest_type,
-            timestamp: timestamp
+            digest_type,
+            timestamp,
         })
     }
 
@@ -142,7 +142,7 @@ impl<R: Read> Deserializer<R> {
     /// Constructs a new deserializer from a reader
     pub fn new(reader: R) -> Deserializer<R> {
         Deserializer {
-            reader: reader
+            reader,
         }
     }
 
@@ -212,7 +212,7 @@ impl<R: Read> Deserializer<R> {
     pub fn read_bytes(&mut self, min: usize, max: usize) -> Result<Vec<u8>, Error> {
         let n = self.read_uint()?;
         if n < min || n > max {
-            return Err(Error::BadLength { min: min, max: max, val: n });
+            return Err(Error::BadLength { min, max, val: n });
         }
         self.read_fixed_bytes(n)
     }
@@ -237,7 +237,7 @@ impl<W: Write> Serializer<W> {
     /// Constructs a new deserializer from a reader
     pub fn new(writer: W) -> Serializer<W> {
         Serializer {
-            writer: writer
+            writer,
         }
     }
 

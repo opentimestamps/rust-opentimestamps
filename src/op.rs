@@ -124,7 +124,7 @@ impl Op {
                 format!("{}", Hexed(input)).into_bytes()
             }
             Op::Reverse => {
-                input.iter().map(|x| *x).rev().collect()
+                input.iter().cloned().rev().collect()
             }
             Op::Append(ref data) => {
                 let mut vec = input.to_vec();

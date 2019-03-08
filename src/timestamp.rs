@@ -109,7 +109,7 @@ impl Timestamp {
                 Ok(Step {
                     data: StepData::Op(op),
                     output: output_digest,
-                    next: next
+                    next,
                 })
             }
         }
@@ -121,7 +121,7 @@ impl Timestamp {
 
         Ok(Timestamp {
             start_digest: digest,
-            first_step: first_step
+            first_step,
         })
     }
 
