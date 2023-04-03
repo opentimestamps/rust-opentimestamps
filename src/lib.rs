@@ -23,7 +23,7 @@
 #![deny(unused_mut)]
 #![deny(missing_docs)]
 
-extern crate crypto;
+extern crate bitcoin_hashes;
 #[macro_use] extern crate log;
 
 pub mod attestation;

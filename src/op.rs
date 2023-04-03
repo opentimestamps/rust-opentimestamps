@@ -18,13 +18,10 @@
 //! timestamps.
 //!
 
-use crypto::digest::Digest;
-use crypto::sha1::Sha1;
-use crypto::sha2::Sha256;
-use crypto::ripemd160::Ripemd160;
 use std::fmt;
 use std::io::{Read, Write};
 
+use bitcoin_hashes::{Hash, ripemd160, sha1, sha256};
 use error::Error;
 use hex::Hexed;
 use ser;
@@ -100,25 +97,13 @@ impl Op {
     pub fn execute(&self, input: &[u8]) -> Vec<u8> {
         match *self {
             Op::Sha1 => {
-                let mut ret = vec![0; 20];
-                let mut hasher = Sha1::new();
-                hasher.input(input);
-                hasher.result(&mut ret);
-                ret
+                sha1::Hash::hash(&input).to_byte_array().to_vec()
             }
             Op::Sha256 => {
-                let mut ret = vec![0; 32];
-                let mut hasher = Sha256::new();
-                hasher.input(input);
-                hasher.result(&mut ret);
-                ret
+                sha256::Hash::hash(&input).to_byte_array().to_vec()
             }
             Op::Ripemd160 => {
-                let mut ret = vec![0; 20];
-                let mut hasher = Ripemd160::new();
-                hasher.input(input);
-                hasher.result(&mut ret);
-                ret
+                ripemd160::Hash::hash(&input).to_byte_array().to_vec()
             }
             Op::Hexlify => {
                 format!("{}", Hexed(input)).into_bytes()
