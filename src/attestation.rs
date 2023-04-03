@@ -76,9 +76,9 @@ impl Attestation {
             let uri_string = String::from_utf8(uri_bytes)?;
             for ch in uri_string.chars() {
                 match ch {
-                    'a'...'z' => {}
-                    'A'...'Z' => {}
-                    '0'...'9' => {}
+                    'a'..='z' => {}
+                    'A'..='Z' => {}
+                    '0'..='9' => {}
                     '.' | '-' | '_' | '/' | ':' => {},
                     x => return Err(Error::InvalidUriChar(x))
                 }
