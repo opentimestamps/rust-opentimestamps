@@ -295,25 +295,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn digest_type_rt() {
-        macro_rules! check_digest_type {
-            ($($tag: ident),*) => {
-                // Empty match to trigger exhaustiveness checking
-                match DigestType {
-                    $(DigestType::$tag => {}),*
-                }
-                // RTT each in turn
-                $({
-                    let tag = DigestType::$tag.to_tag();
-                    assert!(DigestType::from_tag(tag).is_ok());
-                    let from = DigestType::from_tag(tag).unwrap();
-                    assert_eq!(DigestType::$tag, from);
-                })*
-            }
-        };
-    }
-
-    #[test]
     fn digest_len() {
         assert_eq!(DigestType::Sha1.digest_len(), 20);
         assert_eq!(DigestType::Sha256.digest_len(), 32);
