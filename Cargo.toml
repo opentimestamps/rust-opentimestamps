@@ -1,7 +1,6 @@
 [package]
 name = "opentimestamps"
 version = "0.1.2"
-authors = ["Andrew Poelstra <rust-ots@wpsoftware.net>"]
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/opentimestamps/rust-opentimestamps/"
 repository = "https://github.com/opentimestamps/rust-opentimestamps/"
