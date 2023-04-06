@@ -28,7 +28,7 @@ extern crate opentimestamps as ots;
 use std::{env, fs, process};
 
 fn main() {
-    env_logger::init().unwrap();
+    env_logger::init();
 
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {

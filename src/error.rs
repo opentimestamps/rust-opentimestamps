@@ -74,22 +74,8 @@ impl fmt::Display for Error {
 }
 
 impl error::Error for Error {
-    fn description(&self) -> &str {
-        match *self {
-            Error::StackOverflow => "recursion limit reached",
-            Error::InvalidUriChar(_) => "invalid character in URI",
-            Error::BadDigestTag(_) => "invalid digest tag",
-            Error::BadOpTag(_) => "invalid op tag",
-            Error::BadMagic(_) => "bad magic bytes, is this a timestamp file?",
-            Error::BadVersion(_) => "timestamp version not understood",
-            Error::BadLength { .. } => "length out of bounds",
-            Error::TrailingBytes => "expected eof not",
-            Error::Utf8(ref e) => error::Error::description(e),
-            Error::Io(ref e) => error::Error::description(e)
-        }
-    }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             Error::Utf8(ref e) => Some(e),
             Error::Io(ref e) => Some(e),
