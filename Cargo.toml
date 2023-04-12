@@ -1,11 +1,11 @@
 [package]
 name = "opentimestamps"
-version = "0.1.2"
+version = "0.2.0"
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/opentimestamps/rust-opentimestamps/"
 repository = "https://github.com/opentimestamps/rust-opentimestamps/"
 documentation = "https://docs.rs/opentimestamps/"
-description = "Rust library for parsing, verifying and serializing OpenTimestamps timestamps"
+description = "Rust library for parsing, verifying, and serializing OpenTimestamps timestamps"
 
 keywords = [ "crypto", "bitcoin", "ots", "opentimestamps", "timestamping" ]
 
