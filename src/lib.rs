@@ -117,15 +117,17 @@ mod tests {
         let mut rt1 = vec![];
         let mut rt2 = vec![];
 
-        let ots = DetachedTimestampFile::from_reader(SMALL_TEST);
-        assert!(ots.is_ok());
-        assert!(ots.unwrap().to_writer(&mut rt1).is_ok());
+        let otsr = DetachedTimestampFile::from_reader(SMALL_TEST);
+        assert!(otsr.is_ok());
+        let ots = otsr.unwrap();
+        assert!(ots.to_writer(&mut rt1).is_ok());
         assert_eq!(rt1, SMALL_TEST);
 
-        let ots = DetachedTimestampFile::from_reader(LARGE_TEST);
-        ots.as_ref().unwrap();
-        assert!(ots.is_ok());
-        assert!(ots.unwrap().to_writer(&mut rt2).is_ok());
+        let otsr = DetachedTimestampFile::from_reader(LARGE_TEST);
+        otsr.as_ref().unwrap();
+        assert!(otsr.is_ok());
+        let ots = otsr.unwrap();
+        assert!(ots.to_writer(&mut rt2).is_ok());
         assert_eq!(rt2, LARGE_TEST);
     }
 }
